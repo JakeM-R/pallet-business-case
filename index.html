@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business case builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --band:#F3F4EF;
+    --card:#F1F1ED;
+    --text:#1B1A17;
+    --muted:#6E6C6A;
+    --rule:#DDDDDC;
+    --warn:#8A4B1F;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:'Inter Tight','Helvetica Neue',Arial,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px;}
+  nav.top{border-bottom:1px solid var(--rule);}
+  nav.top .wrap{display:flex;justify-content:space-between;align-items:center;height:60px;gap:12px;}
+  .mark{font-weight:600;letter-spacing:-.02em;font-size:17px;}
+  .meta{font-size:13px;color:var(--muted);}
+  .meta .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--text);margin-right:6px;vertical-align:middle;}
+  .meta .dot.off{background:var(--rule);}
+  .eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 14px;}
+  header.hero{text-align:center;padding:56px 0 40px;}
+  header.hero h1{font-weight:400;font-size:clamp(34px,6vw,58px);line-height:1.04;letter-spacing:-.03em;margin:0 auto 14px;max-width:18ch;}
+  header.hero p.sub{color:var(--muted);font-size:18px;max-width:58ch;margin:0 auto;}
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:0;border-top:1px solid var(--rule);}
+  @media (max-width:900px){.layout{grid-template-columns:1fr;} .outputs{order:-1;}}
+  .inputs{background:var(--band);padding:28px 28px 36px;}
+  .outputs{padding:28px 28px 36px;}
+  h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:500;margin:0 0 4px;}
+  .hint{font-size:13px;color:var(--muted);margin:0 0 16px;}
+  .group{padding:18px 0 22px;border-bottom:1px solid var(--rule);}
+  .group:first-child{padding-top:0;}
+  .group:last-child{border-bottom:none;}
+  .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;}
+  @media (max-width:520px){.fields{grid-template-columns:1fr;}}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px;}
+  input,select{width:100%;background:transparent;border:none;border-bottom:1px solid var(--text);border-radius:0;color:var(--text);font-family:inherit;font-size:17px;padding:6px 0 7px;appearance:none;-webkit-appearance:none;}
+  input::placeholder{color:#A9A7A3;}
+  input:focus,select:focus{outline:none;border-bottom-width:2px;padding-bottom:6px;}
+  select{background-image:linear-gradient(45deg,transparent 50%,var(--text) 50%),linear-gradient(135deg,var(--text) 50%,transparent 50%);background-position:calc(100% - 10px) 15px,calc(100% - 5px) 15px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;}
+  table.wf{width:100%;border-collapse:collapse;font-size:15px;}
+  table.wf th{font-weight:400;font-size:12px;color:var(--muted);text-align:left;padding:0 6px 6px 0;}
+  table.wf th.num,table.wf td.num{text-align:right;}
+  table.wf td{border-top:1px solid var(--rule);padding:6px 6px 6px 0;vertical-align:middle;}
+  table.wf td input{font-size:15px;padding:3px 0 4px;text-align:right;border-bottom-color:var(--rule);}
+  table.wf td input.name{text-align:left;}
+  table.wf td.tog{width:26px;}
+  table.wf td.num,table.wf th.num{width:84px;}
+  @media (max-width:520px){table.wf td.num,table.wf th.num{width:58px;} table.wf th{font-size:11px;}}
+  table.wf input[type=checkbox]{appearance:auto;-webkit-appearance:checkbox;width:16px;height:16px;accent-color:var(--text);border:none;}
+  table.wf tr.off td{color:#A9A7A3;}
+  table.wf tr.off td input{color:#A9A7A3;}
+  .wf-foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px;color:var(--muted);gap:12px;flex-wrap:wrap;}
+  a.tl,button.tl{background:none;border:none;padding:0;font:inherit;font-size:14px;color:var(--text);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;cursor:pointer;}
+  .cases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin:22px 0;}
+  .cases > div{padding:16px 14px 16px 0;}
+  .cases > div + div{border-left:1px solid var(--rule);padding-left:14px;}
+  .lbl{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+  .big{font-size:clamp(26px,3.6vw,36px);letter-spacing:-.03em;line-height:1.05;margin:8px 0 6px;font-variant-numeric:tabular-nums;}
+  .small{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .case-base .big{font-weight:500;}
+  .row{display:flex;justify-content:space-between;gap:18px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:15px;}
+  .row span:first-child{color:var(--muted);}
+  .row span:last-child{text-align:right;font-variant-numeric:tabular-nums;}
+  .truth{background:var(--band);padding:18px 20px;margin:22px 0;}
+  .truth p{margin:6px 0 0;font-size:16px;}
+  .curve{margin-top:10px;position:relative;}
+  .cbar{display:grid;grid-template-columns:44px 1fr 92px;align-items:center;gap:10px;font-size:13px;margin:5px 0;}
+  .cbar .track{position:relative;height:16px;background:var(--band);}
+  .cbar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--text);}
+  .cbar.miss .fill{background:#B9B7B2;}
+  .cbar.cur span:first-child{font-weight:600;}
+  .cbar .line{position:absolute;top:-4px;bottom:-4px;width:0;border-left:1px dashed var(--text);}
+  .cbar .v{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;}
+  .tbar{display:grid;grid-template-columns:150px 1fr 74px;align-items:center;gap:10px;font-size:13px;margin:8px 0;}
+  .tbar .track{position:relative;height:16px;background:var(--band);}
+  .tbar .fill{position:absolute;top:0;bottom:0;background:var(--text);}
+  .tbar .mid{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--muted);left:50%;}
+  .tbar .v{color:var(--muted);text-align:right;font-variant-numeric:tabular-nums;}
+  .flag{font-size:13px;color:var(--warn);margin:10px 0 0;}
+  .actions{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:26px;}
+  .pill{display:inline-flex;align-items:center;gap:14px;background:var(--text);color:#fff;border:none;border-radius:999px;font-family:inherit;font-size:16px;padding:7px 7px 7px 22px;cursor:pointer;}
+  .pill .ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#fff;color:var(--text);font-size:16px;}
+  .pill:focus-visible,a.tl:focus-visible,button.tl:focus-visible{outline:2px solid var(--text);outline-offset:3px;}
+  details.src{margin-top:22px;font-size:13px;color:var(--muted);}
+  details.src summary{cursor:pointer;color:var(--text);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;width:max-content;}
+  details.src ul{padding-left:18px;line-height:1.6;}
+  footer.foot{border-top:1px solid var(--rule);margin-top:0;padding:22px 0 40px;font-size:12.5px;color:var(--muted);line-height:1.6;}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+</style>
+</head>
+<body>
+
+<nav class="top"><div class="wrap">
+  <div class="mark">Business case</div>
+  <div class="meta" id="fxStatus"><span class="dot off"></span>Loading FX</div>
+</div></nav>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Business case</p>
+    <h1 id="headline">—</h1>
+    <p class="sub" id="subline"></p>
+  </header>
+</div>
+
+<div class="wrap">
+<div class="layout">
+
+  <section class="inputs" aria-label="Prospect inputs">
+    <div class="group">
+      <h2>Prospect</h2>
+      <p class="hint">Their numbers, from discovery. Presets are starting assumptions, edit to the prospect.</p>
+      <div class="fields">
+        <div><label for="prospect">Prepared for</label><input id="prospect" type="text" placeholder="Company name" autocomplete="off"></div>
+        <div><label for="segment">Segment</label>
+          <select id="segment">
+            <option value="broker">Freight broker</option>
+            <option value="tpl" selected>3PL</option>
+            <option value="shipper">Shipper</option>
+          </select></div>
+        <div><label for="loads">Loads per month</label><input id="loads" type="number" min="0" step="100"></div>
+        <div><label for="ccy">Currency</label>
+          <select id="ccy"><option value="USD" selected>USD</option><option value="GBP">GBP</option><option value="EUR">EUR</option></select></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Manual workflows</h2>
+      <p class="hint">Touches per load and minutes per touch. Switch rows off that don't apply.</p>
+      <table class="wf" aria-label="Workflows">
+        <thead><tr><th></th><th>Workflow</th><th class="num">Touches / load</th><th class="num">Min / touch</th></tr></thead>
+        <tbody id="wfBody"></tbody>
+      </table>
+      <div class="wf-foot"><button class="tl" id="addRow" type="button">Add workflow</button><span id="minPerLoad"></span></div>
+    </div>
+
+    <div class="group">
+      <h2>Team</h2>
+      <div class="fields">
+        <div><label for="fte">Ops headcount on these workflows</label><input id="fte" type="number" min="0" step="1"></div>
+        <div><label for="hours">Productive hours per FTE per year</label><input id="hours" type="number" min="1" step="10" value="1880"></div>
+        <div><label for="wage">Base wage per FTE</label><input id="wage" type="number" min="0" step="500"></div>
+        <div><label for="load">Loaded-cost multiplier</label><input id="load" type="number" min="1" step="0.01" value="1.46"></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Price and automation</h2>
+      <div class="fields">
+        <div><label for="price">Annual price quoted</label><input id="price" type="number" min="0" step="1000" placeholder="Enter quoted price"></div>
+        <div><label for="other">Other annual savings (optional)</label><input id="other" type="number" min="0" step="1000" value="0"></div>
+        <div><label for="aLo">Share of touches automated, low (%)</label><input id="aLo" type="number" min="0" max="100" step="5" value="30"></div>
+        <div><label for="aBase">Base (%)</label><input id="aBase" type="number" min="0" max="100" step="5" value="50"></div>
+        <div><label for="aHi">High (%)</label><input id="aHi" type="number" min="0" max="100" step="5" value="70"></div>
+      </div>
+      <p class="hint" style="margin-top:14px">Automation shares are the rep's assumptions for this prospect, not product claims.</p>
+    </div>
+    <button class="tl" id="reset" type="button">Reset to presets</button>
+  </section>
+
+  <section class="outputs" aria-label="Business case">
+    <div class="lbl">Annual cost recovered</div>
+    <div class="cases">
+      <div><div class="lbl">Low</div><div class="big" id="vLo">—</div><div class="small" id="pLo"></div></div>
+      <div class="case-base"><div class="lbl">Base</div><div class="big" id="vBase">—</div><div class="small" id="pBase"></div></div>
+      <div><div class="lbl">High</div><div class="big" id="vHi">—</div><div class="small" id="pHi"></div></div>
+    </div>
+
+    <div id="rows"></div>
+
+    <div class="truth">
+      <div class="lbl">What has to be true for payback inside 12 months</div>
+      <p id="truth1"></p>
+      <p id="truth2"></p>
+    </div>
+
+    <div class="lbl" id="curveLbl">Payback by share of touches automated</div>
+    <div class="curve" id="curve"></div>
+    <p class="flag" id="flag" hidden></p>
+
+    <div class="actions">
+      <button class="pill" id="download" type="button">Download one-pager <span class="ic" aria-hidden="true">&#8599;</span></button>
+    </div>
+
+    <details class="src">
+      <summary>Sources and method</summary>
+      <ul>
+        <li>Base wage default: BLS Occupational Employment and Wage Statistics, May 2025, cargo and freight agents (SOC 43-5011), national mean annual wage $57,230. Dispatchers (43-5032) mean is $54,740 for comparison.</li>
+        <li>Loaded-cost multiplier 1.46: BLS Employer Costs for Employee Compensation, June 2026. Wages are 68.5% of total compensation for full-time private industry workers, so 1 / 0.685.</li>
+        <li>Productive hours 1,880: starting assumption, 2,080 paid hours less about 200 hours of leave and holidays.</li>
+        <li>Workflow touches and minutes: starting assumptions per segment, to be replaced with the prospect's own numbers.</li>
+        <li>FX: European Central Bank reference rates via frankfurter.app, fetched live.</li>
+        <li>Method: hours freed = loads &times; 12 &times; minutes per load &divide; 60 &times; share automated. Value = hours freed &times; loaded hourly cost, capped at the team's total loaded cost. Freed hours are capacity, not a headcount cut.</li>
+      </ul>
+    </details>
+  </section>
+
+</div>
+</div>
+
+<div class="wrap">
+  <footer class="foot">
+    <p>Concept by Jake Makking-Robinson. Not affiliated with Pallet and not an official Pallet document. Every figure is driven by the inputs on this page; nothing here describes Pallet's product performance or pricing.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+  var BASE_WAGE_USD = 57230;
+  var PRESETS = {
+    broker:{loads:2000,fte:4,wf:[
+      ["Tendering and quoting",2,3],["Check calls and tracking",3,2],
+      ["Appointment scheduling",0.5,3],["Documents (BOL, POD)",2,1.5],["Audit and invoicing",1,3]]},
+    tpl:{loads:15000,fte:20,wf:[
+      ["Tendering and quoting",1,2.5],["Check calls and tracking",2,1.5],
+      ["Appointment scheduling",1,2.5],["Documents (BOL, POD)",2,1],["Audit and invoicing",1,2.5]]},
+    shipper:{loads:4000,fte:6,wf:[
+      ["Tendering and quoting",1,4],["Check calls and tracking",2,2],
+      ["Appointment scheduling",1,3],["Documents (BOL, POD)",1,2],["Audit and invoicing",1,4]]}
+  };
+  var fx = {USD:1}, fxLive = false;
+  var $ = function(id){return document.getElementById(id);};
+  var num = function(id){var v=parseFloat($(id).value);return isFinite(v)?v:0;};
+
+  function sym(){return {USD:"$",GBP:"£",EUR:"€"}[$("ccy").value];}
+  function money(v){
+    var s=sym(), a=Math.abs(v), neg=v<0?"−":"";
+    if(a>=1e6) return neg+s+(a/1e6).toFixed(a>=1e7?1:2)+"M";
+    if(a>=1e4) return neg+s+Math.round(a/1e3)+"k";
+    return neg+s+Math.round(a).toLocaleString("en-US");
+  }
+  function int(v){return Math.round(v).toLocaleString("en-US");}
+  function months(m){
+    if(!isFinite(m)||m<0) return "none";
+    if(m<1) return "under 1 month";
+    if(m>120) return "over 10 years";
+    return (m<10?m.toFixed(1):Math.round(m))+" months";
+  }
+
+  function rowHTML(r,on){
+    return '<tr'+(on?'':' class="off"')+'><td class="tog"><input type="checkbox" aria-label="Include workflow"'+(on?' checked':'')+'></td>'+
+      '<td><input class="name" type="text" value="'+r[0].replace(/"/g,"&quot;")+'" aria-label="Workflow name"></td>'+
+      '<td class="num"><input type="number" min="0" step="0.5" value="'+r[1]+'" aria-label="Touches per load"></td>'+
+      '<td class="num"><input type="number" min="0" step="0.5" value="'+r[2]+'" aria-label="Minutes per touch"></td></tr>';
+  }
+  function applyPreset(){
+    var p = PRESETS[$("segment").value];
+    $("loads").value = p.loads;
+    $("fte").value = p.fte;
+    $("wfBody").innerHTML = p.wf.map(function(r){return rowHTML(r,true);}).join("");
+  }
+  function setWageForCcy(){ $("wage").value = Math.round(BASE_WAGE_USD*(fx[$("ccy").value]||1)/10)*10; }
+
+  function readWorkflows(){
+    var out=[];
+    $("wfBody").querySelectorAll("tr").forEach(function(tr){
+      var ins=tr.querySelectorAll("input"), on=ins[0].checked;
+      tr.classList.toggle("off",!on);
+      out.push({on:on,name:ins[1].value,t:parseFloat(ins[2].value)||0,m:parseFloat(ins[3].value)||0});
+    });
+    return out;
+  }
+
+  // core model, pure so the curve can re-run it per automation share
+  function model(p){
+    var manualHrs = p.loads*12*p.minPerLoad/60;
+    var capHrs = p.fte*p.hours;
+    var hourly = p.hours>0 ? p.wage*p.load/p.hours : 0;
+    var teamCost = p.fte*p.wage*p.load;
+    function at(share){
+      var freed = manualHrs*share;
+      var raw = freed*hourly;
+      var val = Math.min(raw,teamCost) + p.other;
+      var pay = p.price>0 ? (val>0 ? p.price/(val/12) : Infinity) : null;
+      return {freed:freed,val:val,net:val-p.price,pay:pay,capped:raw>teamCost};
+    }
+    var be12share = (manualHrs*hourly)>0 ? Math.max(0,(p.price-p.other))/(manualHrs*hourly) : Infinity;
+    return {manualHrs:manualHrs,capHrs:capHrs,hourly:hourly,teamCost:teamCost,
+            lo:at(p.aLo),base:at(p.aBase),hi:at(p.aHi),be12share:be12share};
+  }
+
+  function params(wf){
+    var mpl = wf.filter(function(w){return w.on;}).reduce(function(s,w){return s+w.t*w.m;},0);
+    return {loads:num("loads"),minPerLoad:mpl,fte:num("fte"),hours:num("hours")||1,wage:num("wage"),load:num("load")||1,
+            price:num("price"),other:num("other"),aLo:num("aLo")/100,aBase:num("aBase")/100,aHi:num("aHi")/100};
+  }
+
+  var last = null;
+  function calc(){
+    var wf = readWorkflows(), p = params(wf), r = model(p);
+    last = {p:p,r:r,wf:wf};
+    var hasPrice = p.price>0;
+    $("minPerLoad").textContent = p.minPerLoad.toFixed(1)+" min of manual work per load";
+
+    // headline
+    if(!(p.loads>0) || !(p.minPerLoad>0)){
+      $("headline").textContent = "Enter the prospect's volume and workflows";
+      $("subline").textContent = "";
+    } else if(!hasPrice){
+      $("headline").textContent = money(r.base.val)+" a year recovered at the base case";
+      $("subline").textContent = "Pays back inside 12 months at any annual price under "+money(r.base.val)+". Enter the quoted price to see payback.";
+    } else if(r.base.pay!==null && isFinite(r.base.pay)){
+      $("headline").textContent = "Payback in "+months(r.base.pay)+" at the base case";
+      $("subline").textContent = (r.be12share<=1)
+        ? "Under 12 months if at least "+Math.ceil(r.be12share*100)+"% of manual touches are automated."
+        : "No automation share pays back inside 12 months at this price. The manual work isn't large enough.";
+    } else {
+      $("headline").textContent = "No payback at this price";
+      $("subline").textContent = "The recovered cost doesn't cover the quoted price at the base case.";
+    }
+
+    [["Lo","lo"],["Base","base"],["Hi","hi"]].forEach(function(k){
+      var c=r[k[1]];
+      $("v"+k[0]).textContent = money(c.val);
+      $("p"+k[0]).textContent = int(c.freed)+" hrs freed"+(hasPrice?" · payback "+months(c.pay):"");
+    });
+
+    var rows = [
+      ["Manual workflow hours per year", int(r.manualHrs)+" hrs"],
+      ["Team capacity on these workflows", int(r.capHrs)+" hrs ("+p.fte+" FTE)"],
+      ["Loaded cost per hour", money(r.hourly)],
+      ["FTE capacity freed, base case", (r.base.freed/p.hours).toFixed(1)+" FTE"],
+      ["Annual price quoted", hasPrice?money(p.price):"not entered"],
+      ["Net annual value, base case", hasPrice?money(r.base.net):"enter price"],
+      ["ROI multiple, base case", hasPrice&&p.price>0?(r.base.val/p.price).toFixed(1)+"x":"enter price"]
+    ];
+    $("rows").innerHTML = rows.map(function(x){return '<div class="row"><span>'+x[0]+'</span><span>'+x[1]+'</span></div>';}).join("");
+
+    // what has to be true
+    $("truth1").textContent = hasPrice
+      ? (r.be12share<=1 ? "Automate at least "+Math.ceil(r.be12share*100)+"% of manual touches at this price."
+                        : "No automation share gets there at this price.")
+      : "Enter the quoted price to solve for the automation share.";
+    $("truth2").textContent = "At the base case ("+Math.round(p.aBase*100)+"% automated), any annual price up to "+money(r.base.val)+" pays back inside 12 months.";
+
+    if(!(p.loads>0)||!(p.minPerLoad>0)){ $("truth1").textContent="Enter volume and workflows to solve."; $("truth2").textContent=""; }
+
+    // flags
+    var flags=[];
+    if(r.manualHrs > r.capHrs*1.05 && r.capHrs>0) flags.push("The workflow hours exceed the team's capacity ("+int(r.manualHrs)+" vs "+int(r.capHrs)+" hrs). Check touches, minutes or headcount.");
+    if(r.base.capped||r.hi.capped) flags.push("Value is capped at the team's total loaded cost.");
+    if(!(p.aLo<=p.aBase && p.aBase<=p.aHi)) flags.push("Automation shares should run low ≤ base ≤ high.");
+    $("flag").hidden = !flags.length; $("flag").textContent = flags.join(" ");
+
+    curve(p);
+  }
+
+  function curve(p){
+    var shares=[10,20,30,40,50,60,70,80,90];
+    var hasPrice=p.price>0;
+    $("curveLbl").textContent = hasPrice ? "Payback by share of touches automated (dashed line = 12 months)" : "Annual cost recovered by share of touches automated";
+    var pts=shares.map(function(sh){var q=Object.assign({},p); q.aBase=sh/100; var m=model(q).base; return {sh:sh,val:m.val,pay:m.pay};});
+    var cur=Math.round(p.aBase*100);
+    if(!(p.loads>0)||!(p.minPerLoad>0)){ $("curve").innerHTML=''; return; }
+    var CAP=24, maxVal=Math.max.apply(null,pts.map(function(x){return x.val;}))||1;
+    $("curve").innerHTML = pts.map(function(x){
+      var w, v, miss=false;
+      if(hasPrice){ var m=isFinite(x.pay)?x.pay:CAP*2; w=Math.min(m,CAP)/CAP*100; miss=!(m<=12); v=isFinite(x.pay)?(x.pay>CAP?"> "+CAP+" mo":x.pay.toFixed(1)+" mo"):"none"; }
+      else { w=x.val/maxVal*100; v=money(x.val); }
+      return '<div class="cbar'+(miss?' miss':'')+(x.sh===cur?' cur':'')+'"><span>'+x.sh+'%</span><div class="track"><div class="fill" style="width:'+w.toFixed(1)+'%"></div>'+
+        (hasPrice?'<div class="line" style="left:'+(12/CAP*100)+'%"></div>':'')+'</div><span class="v">'+v+'</span></div>';
+    }).join("");
+  }
+
+  function loadFx(){
+    fetch("https://api.frankfurter.app/latest?from=USD&to=GBP,EUR")
+      .then(function(r){if(!r.ok) throw 0; return r.json();})
+      .then(function(d){ fx.GBP=d.rates.GBP; fx.EUR=d.rates.EUR; fxLive=true;
+        $("fxStatus").innerHTML='<span class="dot"></span>ECB rates, '+d.date; })
+      .catch(function(){ $("fxStatus").innerHTML='<span class="dot off"></span>FX unavailable, USD only'; });
+  }
+
+  var prevCcy = "USD";
+  function convertMoneyFields(to){
+    var rate = (fx[to]||1)/(fx[prevCcy]||1);
+    ["wage","price","other"].forEach(function(id){ if($(id).value!=="") $(id).value = Math.round(parseFloat($(id).value)*rate); });
+    prevCcy = to;
+  }
+
+  document.addEventListener("input",function(e){ if(e.target.closest(".inputs")) calc(); });
+  document.addEventListener("change",function(e){ if(e.target.type==="checkbox") calc(); });
+  $("segment").addEventListener("change",function(){ applyPreset(); calc(); });
+  $("ccy").addEventListener("change",function(){
+    if(!fx[$("ccy").value]){ $("ccy").value="USD"; return; }
+    convertMoneyFields($("ccy").value); calc();
+  });
+  $("addRow").addEventListener("click",function(){ $("wfBody").insertAdjacentHTML("beforeend",rowHTML(["New workflow",1,1],true)); calc(); });
+  $("reset").addEventListener("click",function(){
+    applyPreset(); $("hours").value=1880; $("load").value=1.46; $("aLo").value=30; $("aBase").value=50; $("aHi").value=70; $("other").value=0;
+    setWageForCcy(); calc();
+  });
+
+  // ── PDF one-pager
+  $("download").addEventListener("click",function(){
+    var L=last, p=L.p, r=L.r;
+    var doc=new window.jspdf.jsPDF({unit:"mm",format:"a4"});
+    var W=210,ml=16,cw=178,y=0;
+    var INK=[27,26,23],MUT=[110,108,106],RULE=[221,221,220],BAND=[243,244,239];
+    function tc(c){doc.setTextColor(c[0],c[1],c[2]);} function fc(c){doc.setFillColor(c[0],c[1],c[2]);} function dc(c){doc.setDrawColor(c[0],c[1],c[2]);}
+    function rule(yy){dc(RULE);doc.setLineWidth(0.25);doc.line(ml,yy,ml+cw,yy);}
+    function pdfMoney(v){return money(v).replace("−","-").replace("£","GBP ").replace("€","EUR ");}
+    var name=$("prospect").value.trim(), date=new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+    y=14; doc.setFont("helvetica","normal"); doc.setFontSize(8); tc(MUT);
+    doc.text("BUSINESS CASE",ml,y); doc.text(date,ml+cw,y,{align:"right"});
+    y+=11; doc.setFontSize(20); tc(INK);
+    doc.text(doc.splitTextToSize($("headline").textContent,cw),ml,y);
+    y+=9; doc.setFontSize(10); tc(MUT);
+    var sub=doc.splitTextToSize($("subline").textContent,cw); doc.text(sub,ml,y); y+=sub.length*4.5+2;
+    doc.text([name||"Prospect", $("segment").options[$("segment").selectedIndex].text, int(p.loads)+" loads/month", p.fte+" ops FTE"].join("  ·  "),ml,y);
+    y+=6; rule(y); y+=4;
+    fc(BAND); doc.rect(ml,y,cw,30,"F");
+    [["LOW","lo",p.aLo],["BASE","base",p.aBase],["HIGH","hi",p.aHi]].forEach(function(k,i){
+      var x=ml+6+i*(cw/3), c=r[k[1]];
+      doc.setFontSize(7.5); tc(MUT); doc.text(k[0]+"  ·  "+Math.round(k[2]*100)+"% AUTOMATED",x,y+7);
+      doc.setFontSize(18); tc(INK); doc.text(pdfMoney(c.val),x,y+16);
+      doc.setFontSize(8); tc(MUT); doc.text(int(c.freed)+" hrs freed"+(p.price>0?"  ·  payback "+months(c.pay):""),x,y+23);
+    });
+    y+=38;
+    doc.setFontSize(7.5); tc(MUT); doc.text("WHAT HAS TO BE TRUE FOR PAYBACK INSIDE 12 MONTHS",ml,y); y+=5;
+    doc.setFontSize(10); tc(INK);
+    var t=doc.splitTextToSize($("truth1").textContent+" "+$("truth2").textContent,cw); doc.text(t,ml,y); y+=t.length*4.6+4; rule(y); y+=7;
+    doc.setFontSize(7.5); tc(MUT); doc.text("INPUTS",ml,y); y+=5;
+    var inputs=[["Loads per month",int(p.loads)],["Manual minutes per load",p.minPerLoad.toFixed(1)],["Ops headcount",String(p.fte)],["Base wage per FTE",pdfMoney(p.wage)],
+      ["Loaded-cost multiplier",p.load.toFixed(2)],["Productive hours per FTE",int(p.hours)],["Annual price quoted",p.price>0?pdfMoney(p.price):"not entered"],["Other annual savings",pdfMoney(p.other)]];
+    inputs.forEach(function(a,i){var col=i%2,ri=Math.floor(i/2),x=ml+col*(cw/2),yy=y+ri*9;
+      doc.setFontSize(8); tc(MUT); doc.text(a[0],x,yy); doc.setFontSize(10); tc(INK); doc.text(a[1],x,yy+4.5);});
+    y+=Math.ceil(inputs.length/2)*9+3; rule(y); y+=7;
+    doc.setFontSize(7.5); tc(MUT); doc.text("WORKFLOWS",ml,y); y+=5;
+    L.wf.filter(function(w){return w.on;}).forEach(function(w){
+      doc.setFontSize(9); tc(INK); doc.text(w.name,ml,y); tc(MUT);
+      doc.text(w.t+(w.t===1?" touch":" touches")+" x "+w.m+" min",ml+cw,y,{align:"right"}); y+=5.2; });
+    y+=2; rule(y);
+    var fy=272; rule(fy); fy+=5; doc.setFontSize(7); tc(MUT);
+    doc.text(doc.splitTextToSize("Automation shares are assumptions for this prospect, not product claims. Freed hours are capacity, not a headcount reduction. Wage default: BLS OEWS May 2025, cargo and freight agents mean. Loaded multiplier: BLS ECEC June 2026. Prepared with a concept tool by Jake Makking-Robinson; not an official Pallet document.",cw),ml,fy);
+    doc.save("business-case-"+(name||"prospect").replace(/[^a-z0-9]/gi,"-").toLowerCase()+".pdf");
+  });
+
+  applyPreset(); setWageForCcy(); calc(); loadFx();
+})();
+</script>
+</body>
+</html>
